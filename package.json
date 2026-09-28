@@ -1,0 +1,23 @@
+{
+  "name": "minicurso-dev",
+  "version": "1.0.0",
+  "description": "Um organizador de tarefas com SQLite e IA",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dehserra/foco-ai.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dehserra/foco-ai/issues"
+  },
+  "homepage": "https://github.com/dehserra/foco-ai#readme"
+}
