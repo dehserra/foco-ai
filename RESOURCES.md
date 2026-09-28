@@ -18,6 +18,8 @@
   Guia oficial para breakpoints, configurações de execução e inspeção de variáveis. Use ao depurar o FocoAI.
 - [Node.js: SQLite](https://nodejs.org/api/sqlite.html)
   Documentação oficial do módulo `node:sqlite` e de `DatabaseSync`. Use na Aula 3 para criar e consultar o banco de tarefas sem dependências externas.
+- [Node.js: Test runner](https://nodejs.org/api/test.html)
+  Documentação oficial do executor de testes nativo. Use na Aula 4 para testar as rotas HTTP sem instalar uma biblioteca adicional.
 
 ## Wisdom (Communities)
 

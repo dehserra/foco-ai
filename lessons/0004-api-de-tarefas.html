@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aula 4 — API de tarefas</title><link rel="stylesheet" href="../assets/course.css"></head><body>
+<p class="kicker">FocoAI · Aula 4 de 12 · 35–45 minutos</p><h1>Exponha tarefas por uma API HTTP</h1><p class="lede">Você transformará o script da Aula 3 em uma camada de dados reutilizável e criará rotas para listar, criar e concluir tarefas. A interface visual ainda não existe: nesta aula, <code>curl</code> será o cliente.</p>
+<div class="callout good"><strong>Vitória desta aula:</strong> <code>GET /tasks</code>, <code>POST /tasks</code> e <code>PATCH /tasks/:id</code> usam o SQLite e devolvem JSON com respostas HTTP corretas.</div>
+<p><a href="../reference/0004-mapa-aula-4-api-tarefas.html">Leia primeiro: mapa conceitual da Aula 4</a>.</p>
+<h2>Checkpoint</h2><ol class="steps"><li>No terminal da pasta <code>minicurso-dev</code>, execute <pre>git status
+node --version</pre><strong>Esperado:</strong> estado limpo, branch <code>main</code> atualizada e Node 24 ou mais recente. Se o estado não estiver limpo, não use <code>git add -A</code> automaticamente: leia primeiro os arquivos listados por <code>git status</code>.</li></ol>
+<h2>1. Transforme o banco em módulo reutilizável</h2><p>Hoje, executar <code>require("./database")</code> inseriria uma tarefa e imprimia uma tabela. Isso é adequado para uma demonstração, mas não para um servidor. Substitua todo o conteúdo de <code>src/database.js</code> por:</p><pre>const { mkdirSync } = require("node:fs");
+const { DatabaseSync } = require("node:sqlite");
+
+mkdirSync("data", { recursive: true });
+
+const database = new DatabaseSync("data/foco-ai.db");
+
+database.exec(`
+  CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'pending'
+      CHECK (status IN ('pending', 'done')),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+const listTasksStatement = database.prepare(`
+  SELECT id, title, status, created_at
+  FROM tasks
+  ORDER BY id
+`);
+
+const createTaskStatement = database.prepare(`
+  INSERT INTO tasks (title)
+  VALUES (?)
+`);
+
+const findTaskByIdStatement = database.prepare(`
+  SELECT id, title, status, created_at
+  FROM tasks
+  WHERE id = ?
+`);
+
+const updateTaskStatusStatement = database.prepare(`
+  UPDATE tasks
+  SET status = ?
+  WHERE id = ?
+`);
+
+function listTasks() {
+  return listTasksStatement.all();
+}
+
+function createTask(title) {
+  const result = createTaskStatement.run(title);
+  return findTaskByIdStatement.get(result.lastInsertRowid);
+}
+
+function updateTaskStatus(id, status) {
+  const result = updateTaskStatusStatement.run(status, id);
+
+  if (result.changes === 0) {
+    return null;
+  }
+
+  return findTaskByIdStatement.get(id);
+}
+
+module.exports = { listTasks, createTask, updateTaskStatus };</pre>
+<p><strong>O que mudou:</strong> <code>module.exports</code> torna as três funções disponíveis para <code>server.js</code>. O script não cria mais uma tarefa de exemplo a cada execução. <code>result.lastInsertRowid</code> identifica a linha recém-criada; <code>result.changes</code> informa se o <code>UPDATE</code> encontrou uma tarefa.</p>
+<h2>2. Crie respostas JSON e leitura do corpo</h2><p>Substitua todo o conteúdo de <code>src/server.js</code> por:</p><pre>const http = require("node:http");
+const {
+  createTask,
+  listTasks,
+  updateTaskStatus,
+} = require("./database");
+
+const PORT = process.env.PORT || 3000;
+
+function sendJson(response, statusCode, body) {
+  response.writeHead(statusCode, { "Content-Type": "application/json" });
+  response.end(JSON.stringify(body));
+}
+
+function readJsonBody(request) {
+  return new Promise((resolve, reject) =&gt; {
+    let body = "";
+
+    request.on("data", (chunk) =&gt; {
+      body += chunk;
+    });
+
+    request.on("end", () =&gt; {
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("JSON inválido"));
+      }
+    });
+  });
+}
+
+const server = http.createServer(async (request, response) =&gt; {
+  try {
+    if (request.method === "GET" &amp;&amp; request.url === "/health") {
+      sendJson(response, 200, { status: "ok" });
+      return;
+    }
+
+    if (request.method === "GET" &amp;&amp; request.url === "/tasks") {
+      sendJson(response, 200, { tasks: listTasks() });
+      return;
+    }
+
+    if (request.method === "POST" &amp;&amp; request.url === "/tasks") {
+      const { title } = await readJsonBody(request);
+
+      if (typeof title !== "string" || title.trim() === "") {
+        sendJson(response, 400, { error: "title é obrigatório" });
+        return;
+      }
+
+      const task = createTask(title.trim());
+      sendJson(response, 201, { task });
+      return;
+    }
+
+    const taskRoute = request.url.match(/^\/tasks\/(\d+)$/);
+
+    if (request.method === "PATCH" &amp;&amp; taskRoute) {
+      const { status } = await readJsonBody(request);
+      const id = Number(taskRoute[1]);
+
+      if (status !== "pending" &amp;&amp; status !== "done") {
+        sendJson(response, 400, { error: "status deve ser pending ou done" });
+        return;
+      }
+
+      const task = updateTaskStatus(id, status);
+
+      if (!task) {
+        sendJson(response, 404, { error: "Tarefa não encontrada" });
+        return;
+      }
+
+      sendJson(response, 200, { task });
+      return;
+    }
+
+    sendJson(response, 404, { error: "Rota não encontrada" });
+  } catch (error) {
+    if (error.message === "JSON inválido") {
+      sendJson(response, 400, { error: error.message });
+      return;
+    }
+
+    if (
+      error.code === "ERR_SQLITE_ERROR" &amp;&amp;
+      error.message.includes("UNIQUE constraint failed")
+    ) {
+      sendJson(response, 409, { error: "Já existe uma tarefa com esse título" });
+      return;
+    }
+
+    console.error(error);
+    sendJson(response, 500, { error: "Erro interno" });
+  }
+});
+
+server.listen(PORT, () =&gt; {
+  console.log(`FocoAI disponível em http://localhost:${PORT}`);
+});</pre>
+<div class="callout warn"><strong>Atenção ao colar:</strong> o código usa funções de seta, escritas com <code>=&gt;</code>. Ao copiar da aula, o VS Code deve receber os dois caracteres <code>=</code> e <code>&gt;</code>. Se aparecer <code>&amp;gt;</code> literalmente no arquivo JavaScript, remova <code>&amp;</code> para que a seta fique <code>=&gt;</code>.</div>
+<h2>3. Execute o servidor</h2><ol class="steps"><li>No terminal, execute <pre>npm run dev</pre>O processo permanecerá ativo e deve informar <code>http://localhost:3000</code>.</li><li>Abra um <strong>segundo terminal</strong> no VS Code, pelo botão <strong>+</strong> no painel Terminal. Execute:<pre>curl http://localhost:3000/tasks</pre><strong>Esperado:</strong> JSON com uma chave <code>tasks</code> e uma lista.</li><li>Crie uma tarefa. No Git Bash, execute:<pre>curl -X POST http://localhost:3000/tasks -H "Content-Type: application/json" -d '{"title":"Estudar API HTTP"}'</pre><code>-X POST</code> escolhe o método; <code>-H</code> envia o cabeçalho que declara JSON; <code>-d</code> envia o corpo. <strong>Esperado:</strong> status <code>201</code> e a nova tarefa.</li><li>Liste novamente:<pre>curl http://localhost:3000/tasks</pre>A tarefa recém-criada deve aparecer, pois ela foi gravada no SQLite.</li><li>Conclua a tarefa de id <code>2</code> — ajuste o número se a lista mostrar outro id:<pre>curl -X PATCH http://localhost:3000/tasks/2 -H "Content-Type: application/json" -d '{"status":"done"}'</pre><strong>Esperado:</strong> a resposta mostra <code>status</code> igual a <code>done</code>.</li></ol>
+<h2>4. Teste erros importantes</h2><p>Com o servidor ainda ativo, execute:</p><pre>curl -X POST http://localhost:3000/tasks -H "Content-Type: application/json" -d '{}'
+curl -X PATCH http://localhost:3000/tasks/9999 -H "Content-Type: application/json" -d '{"status":"done"}'</pre><p>O primeiro deve responder com erro de validação (<code>400</code>); o segundo, com tarefa não encontrada (<code>404</code>). Para ver os códigos HTTP explicitamente, acrescente <code>-i</code> a cada comando.</p>
+<h2>O que observar</h2><table><thead><tr><th>Resposta</th><th>Significado</th></tr></thead><tbody><tr><td><code>200</code></td><td>Consulta ou atualização concluída.</td></tr><tr><td><code>201</code></td><td>Uma tarefa foi criada.</td></tr><tr><td><code>400</code></td><td>O cliente enviou dados inválidos.</td></tr><tr><td><code>404</code></td><td>A rota ou a tarefa não existe.</td></tr><tr><td><code>409</code></td><td>O título repetiu uma regra de unicidade do banco.</td></tr></tbody></table>
+<h2>Se algo der errado</h2><div class="callout warn"><strong><code>SyntaxError: Unexpected token '&amp;'</code>:</strong> a seta de função foi colada como texto HTML. Use <code>=&gt;</code> no arquivo JavaScript.<br><br><strong><code>curl: (7) Failed to connect</code>:</strong> confirme que <code>npm run dev</code> continua ativo no primeiro terminal e que ele indica a porta 3000.<br><br><strong><code>ERR_SQLITE_CONSTRAINT_UNIQUE</code> no terminal:</strong> envie um título novo. Pela API, um título repetido deve virar resposta <code>409</code>.<br><br><strong><code>JSON inválido</code>:</strong> no Git Bash, mantenha o corpo entre aspas simples externas e as chaves entre aspas duplas internas, como nos exemplos.</div>
+<h2>Próximo checkpoint</h2><p>Não faça commit ainda. Primeiro envie as saídas dos três pedidos: <code>GET /tasks</code>, <code>POST /tasks</code> e <code>PATCH /tasks/:id</code>. Na continuação, automatizaremos essas verificações com <code>node:test</code>, trocaremos o script <code>npm test</code> e só então faremos o commit da Aula 4.</p>
+<h2>Referências</h2><p>Fontes principais: <a href="https://nodejs.org/api/http.html">HTTP no Node.js</a>, <a href="https://nodejs.org/api/sqlite.html">SQLite no Node.js</a> e <a href="https://nodejs.org/api/test.html">Test runner no Node.js</a>. Pergunte ao professor sempre que uma resposta HTTP ou erro não tiver o significado esperado.</p>
+</body></html>
