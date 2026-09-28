@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aula 3 — SQLite e modelo de tarefas</title><link rel="stylesheet" href="../assets/course.css"></head><body>
+<p class="kicker">FocoAI · Aula 3 de 12 · 25–35 minutos</p><h1>Crie o banco de tarefas com SQLite</h1><p class="lede">Você criará um banco de dados local em arquivo, definirá a tabela <code>tasks</code> e consultará uma tarefa real pelo terminal. Não instalaremos pacotes: o Node 24 já inclui <code>node:sqlite</code>.</p>
+<div class="callout good"><strong>Vitória desta aula:</strong> o comando <code>node src/database.js</code> imprimirá uma tabela com uma tarefa armazenada em <code>data/foco-ai.db</code>.</div><p><a href="../reference/0003-mapa-aula-3-sqlite.html">Leia primeiro: mapa conceitual da Aula 3</a>.</p>
+<h2>Modelo mental mínimo</h2><table><thead><tr><th>Termo</th><th>Função no FocoAI</th></tr></thead><tbody><tr><td>Banco SQLite</td><td>Um arquivo local que guarda dados estruturados.</td></tr><tr><td>Tabela</td><td>Uma coleção de registros do mesmo tipo: <code>tasks</code>.</td></tr><tr><td>Coluna</td><td>Uma propriedade de cada tarefa: título, status ou data.</td></tr><tr><td>Linha / registro</td><td>Uma tarefa específica armazenada na tabela.</td></tr><tr><td>Schema</td><td>A definição da estrutura e das regras da tabela.</td></tr></tbody></table>
+<h2>Faça agora</h2><ol class="steps">
+<li><strong>Confira o ponto de partida.</strong> No terminal da pasta <code>minicurso-dev</code>, execute:<pre>git status
+node --version</pre>Você precisa estar na branch <code>main</code>, com o estado limpo, e usar Node 24 ou mais recente. Se houver somente atualizações revisadas de materiais do curso, agrupe-as em um commit de documentação antes de continuar: <code>git add -A</code>, <code>git status</code>, <code>git commit -m "docs: atualizar materiais da aula"</code>, <code>git push</code>.</li>
+<li><strong>Crie o arquivo do banco.</strong> No Explorer do VS Code, clique com o botão direito em <code>src</code> → <strong>New File</strong> → escreva <code>database.js</code>. Cole e salve:<pre>const { mkdirSync } = require("node:fs");
+const { DatabaseSync } = require("node:sqlite");
+
+mkdirSync("data", { recursive: true });
+
+const database = new DatabaseSync("data/foco-ai.db");
+
+database.exec(`
+  CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'pending'
+      CHECK (status IN ('pending', 'done')),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+const addTask = database.prepare(`
+  INSERT OR IGNORE INTO tasks (title, status)
+  VALUES (?, ?)
+`);
+
+addTask.run("Criar a primeira tela do FocoAI", "pending");
+
+const tasks = database.prepare(`
+  SELECT id, title, status, created_at
+  FROM tasks
+  ORDER BY id
+`).all();
+
+console.table(tasks);
+database.close();</pre></li>
+<li><strong>Execute o arquivo.</strong> No terminal, execute:<pre>node src/database.js</pre><strong>Resultado esperado:</strong> uma tabela contendo uma linha com o título <code>Criar a primeira tela do FocoAI</code> e status <code>pending</code>. O arquivo <code>data/foco-ai.db</code> será criado automaticamente. Ele não aparecerá no <code>git status</code>, pois <code>*.db</code> já está no <code>.gitignore</code>.</li>
+<li><strong>Leia o schema.</strong> No código, localize <code>CREATE TABLE IF NOT EXISTS tasks</code>. Ele só cria a tabela se ela ainda não existe. Confira as regras: <code>title</code> é obrigatório e único; <code>status</code> começa como <code>pending</code> e só aceita <code>pending</code> ou <code>done</code>; <code>created_at</code> recebe a data automaticamente.</li>
+<li><strong>Teste a persistência.</strong> Execute o mesmo comando uma segunda vez:<pre>node src/database.js</pre>O resultado deve continuar com uma única tarefa, não duas. <code>INSERT OR IGNORE</code> ignora a tentativa de inserir um título que já existe. Isso prova que a segunda execução leu o mesmo arquivo de banco.</li>
+<li><strong>Registre a entrega.</strong> Execute:<pre>git status
+git add -A
+git status
+git commit -m "feat: adicionar banco SQLite de tarefas"
+git push
+git status</pre><strong>Resultado final:</strong> estado limpo e branch atualizada no GitHub. O código <code>src/database.js</code> entra no commit; o arquivo local <code>data/foco-ai.db</code> não entra.</li>
+</ol>
+<h2>O que cada bloco de código fez</h2><table><thead><tr><th>Bloco</th><th>Função</th></tr></thead><tbody><tr><td><code>mkdirSync</code></td><td>Cria a pasta <code>data</code> quando ela ainda não existe.</td></tr><tr><td><code>new DatabaseSync</code></td><td>Abre ou cria o arquivo SQLite.</td></tr><tr><td><code>database.exec</code></td><td>Executa o SQL que define a tabela.</td></tr><tr><td><code>database.prepare</code></td><td>Prepara uma consulta SQL com valores seguros.</td></tr><tr><td><code>console.table</code></td><td>Mostra o resultado da consulta de forma legível no terminal.</td></tr></tbody></table>
+<h2>Se algo der errado</h2><div class="callout warn"><strong><code>Cannot find module 'node:sqlite'</code>:</strong> rode <code>node --version</code>. Esta aula exige Node 24 ou mais recente.<br><br><strong><code>near "pending": syntax error</code>:</strong> copie o código novamente; aspas, vírgulas e parênteses do schema são significativos.<br><br><strong>Aparecem duas tarefas iguais:</strong> apague somente o arquivo local <code>data/foco-ai.db</code>, execute o script uma vez e confira o SQL <code>INSERT OR IGNORE</code>. Não execute <code>git add -A</code> antes de verificar que o banco continua ignorado.</div>
+<h2>Referências</h2><p>Fonte principal: <a href="https://nodejs.org/api/sqlite.html">SQLite no Node.js</a>. Consulte também o <a href="https://www.sqlite.org/quickstart.html">Quick Start do SQLite</a> e o <a href="../reference/0001-mapa-do-curso.html">Mapa do curso</a>.</p><div class="callout good"><strong>Ao concluir:</strong> envie a tabela exibida por <code>node src/database.js</code> e a saída final de <code>git status</code>.</div><p>Pergunte ao professor quando uma tabela, consulta ou mensagem de erro não corresponder ao esperado.</p>
+</body></html>

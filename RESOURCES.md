@@ -16,6 +16,8 @@
   Documentação oficial para criar um servidor HTTP sem dependências externas. Use na Aula 2 ao implementar o endpoint de saúde.
 - [VS Code: depuração](https://code.visualstudio.com/docs/debugtest/debugging)
   Guia oficial para breakpoints, configurações de execução e inspeção de variáveis. Use ao depurar o FocoAI.
+- [Node.js: SQLite](https://nodejs.org/api/sqlite.html)
+  Documentação oficial do módulo `node:sqlite` e de `DatabaseSync`. Use na Aula 3 para criar e consultar o banco de tarefas sem dependências externas.
 
 ## Wisdom (Communities)
 

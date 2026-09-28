@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mapa da Aula 3 — SQLite</title><link rel="stylesheet" href="../assets/course.css"></head><body>
+<p class="kicker">FocoAI · Mapa conceitual da sessão</p><h1>SQLite: de servidor a tarefas persistentes</h1><p class="lede">Leia este mapa antes da Aula 3. Ele mostra o objetivo, os conceitos, os arquivos envolvidos e o que ainda não faz parte desta etapa.</p>
+<h2>Objetivo</h2><p>O FocoAI já responde <code>GET /health</code>, mas ainda não guarda informações. Nesta aula, ele passa a armazenar tarefas em um banco SQLite local.</p>
+<h2>Conceitos</h2><table><thead><tr><th>Conceito</th><th>Significado</th></tr></thead><tbody><tr><td>Servidor</td><td>Programa que aguarda pedidos, como <code>src/server.js</code>.</td></tr><tr><td>Banco de dados</td><td>Armazenamento estruturado de dados que o programa precisa lembrar.</td></tr><tr><td>SQLite</td><td>Banco que vive em um arquivo local; não exige outro servidor.</td></tr><tr><td>Tabela</td><td>Coleção de registros do mesmo tipo; criaremos <code>tasks</code>.</td></tr><tr><td>Schema</td><td>Definição das colunas e regras da tabela.</td></tr><tr><td>SQL</td><td>Linguagem para criar, inserir e consultar dados.</td></tr></tbody></table>
+<h2>Mapa das peças</h2><pre>Navegador
+   ↓ pede uma tarefa
+Servidor HTTP
+   ↓ chama o código do banco
+SQLite
+   ↓ lê ou grava
+data/foco-ai.db</pre><p>Nesta aula, construiremos apenas <code>src/database.js → SQLite → data/foco-ai.db</code>. A ligação do servidor ao banco virá depois.</p>
+<h2>Arquivos</h2><table><thead><tr><th>Arquivo</th><th>Função</th></tr></thead><tbody><tr><td><code>src/server.js</code></td><td>Já existe; responde <code>/health</code>.</td></tr><tr><td><code>src/database.js</code></td><td>Será criado; define a tabela e consulta tarefas.</td></tr><tr><td><code>data/foco-ai.db</code></td><td>Será criado automaticamente; contém os dados locais.</td></tr><tr><td><code>.gitignore</code></td><td>Já ignora <code>*.db</code>, então o banco local não vai para o GitHub.</td></tr></tbody></table>
+<h2>Tabela tasks</h2><table><thead><tr><th>Coluna</th><th>Exemplo</th><th>Regra</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>1</code></td><td>Identificador automático.</td></tr><tr><td><code>title</code></td><td>Criar a primeira tela do FocoAI</td><td>Obrigatório e único.</td></tr><tr><td><code>status</code></td><td><code>pending</code></td><td>Aceita apenas <code>pending</code> ou <code>done</code>.</td></tr><tr><td><code>created_at</code></td><td>Data e hora</td><td>Preenchido automaticamente.</td></tr></tbody></table>
+<h2>Resultado observável</h2><p><code>node src/database.js</code> imprimirá uma tabela contendo uma tarefa persistida no arquivo <code>data/foco-ai.db</code>.</p>
+<h2>Fora de escopo</h2><p>Interface visual, CRUD pelo navegador, IA e conexão entre <code>server.js</code> e o banco serão construídos em aulas posteriores.</p>
+<p><a href="../lessons/0003-sqlite-e-modelo-de-tarefas.html">Abrir Aula 3</a> · <a href="0001-mapa-do-curso.html">Mapa completo do curso</a></p>
+</body></html>
