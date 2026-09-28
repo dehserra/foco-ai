@@ -12,6 +12,10 @@
   Introdução oficial ao banco de dados em arquivo e ao uso de SQL. Use para criar e inspecionar o banco local.
 - [OpenAI: Developer quickstart](https://platform.openai.com/docs/quickstart)
   Guia oficial para configurar uma chave por variável de ambiente e fazer uma primeira chamada de API. Use apenas na aula de integração de IA.
+- [Node.js: módulo HTTP](https://nodejs.org/api/http.html)
+  Documentação oficial para criar um servidor HTTP sem dependências externas. Use na Aula 2 ao implementar o endpoint de saúde.
+- [VS Code: depuração](https://code.visualstudio.com/docs/debugtest/debugging)
+  Guia oficial para breakpoints, configurações de execução e inspeção de variáveis. Use ao depurar o FocoAI.
 
 ## Wisdom (Communities)
 

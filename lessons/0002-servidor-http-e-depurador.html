@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aula 2 — Servidor HTTP e depurador</title><link rel="stylesheet" href="../assets/course.css"></head><body>
+<p class="kicker">FocoAI · Aula 2 de 12 · 30–40 minutos</p><h1>Crie e depure o primeiro endpoint</h1><p class="lede">Você criará um servidor Node que responde em <code>/health</code>. O objetivo não é uma aplicação completa: é entender o ciclo editar → executar → testar → depurar → registrar.</p>
+<div class="callout good"><strong>Vitória desta aula:</strong> <code>http://localhost:3000/health</code> responderá <code>{"status":"ok"}</code>, e o depurador do VS Code parará em um breakpoint.</div>
+<h2>Modelo mental mínimo</h2><table><thead><tr><th>Termo</th><th>Significado neste projeto</th></tr></thead><tbody><tr><td>Servidor HTTP</td><td>Programa que fica aguardando requisições em uma porta.</td></tr><tr><td>Endpoint</td><td>Um endereço e método, por exemplo <code>GET /health</code>.</td></tr><tr><td>Porta 3000</td><td>Canal local usado para acessar este servidor no navegador.</td></tr><tr><td>Breakpoint</td><td>Pausa proposital para inspecionar o código enquanto ele executa.</td></tr></tbody></table>
+<h2>Faça agora</h2><ol class="steps">
+<li><strong>Confirme que está na pasta e que o Git está limpo.</strong> No VS Code, veja se a janela mostra <code>minicurso-dev</code>. Clique em <strong>Terminal → Novo Terminal</strong> e execute:<pre>git status
+node --version</pre><strong>Resultado esperado:</strong> <code>nothing to commit, working tree clean</code> e uma versão começando por <code>v26</code>. Se o status listar apenas atualizações já revisadas dos materiais do curso, agrupe-as em um commit de documentação antes de iniciar esta aula: <code>git add -A</code>, <code>git status</code>, <code>git commit -m "docs: atualizar materiais da aula"</code> e <code>git push</code>. Se houver algum arquivo que você não reconhece, não use <code>git add -A</code>; envie aqui a saída completa.</li>
+<li><strong>Crie o projeto Node.</strong> No mesmo terminal, execute:<pre>npm init -y
+npm pkg set scripts.dev="node --watch src/server.js"
+npm pkg set scripts.start="node src/server.js"</pre><code>npm init -y</code> cria <code>package.json</code> sem perguntas; <code>pkg set</code> adiciona atalhos. <code>dev</code> reiniciará o servidor ao salvar arquivos. Confira com:<pre>Get-Content package.json</pre><strong>Resultado esperado:</strong> uma seção <code>scripts</code> contendo <code>dev</code> e <code>start</code>.</li>
+<li><strong>Crie a pasta e o arquivo do servidor pelo Explorer.</strong> Na barra lateral esquerda, clique no primeiro ícone, <strong>Explorer</strong>. Clique com o botão direito sobre a pasta raiz <code>minicurso-dev</code> → <strong>New Folder</strong> → escreva <code>src</code> → pressione <code>Enter</code>. Clique com o botão direito em <code>src</code> → <strong>New File</strong> → escreva <code>server.js</code> → pressione <code>Enter</code>.</li>
+<li><strong>Cole o servidor.</strong> Com <code>src/server.js</code> aberto, substitua qualquer conteúdo por:<pre>const http = require("node:http");
+
+const PORT = process.env.PORT || 3000;
+
+const server = http.createServer((request, response) => {
+  if (request.method === "GET" && request.url === "/health") {
+    response.writeHead(200, { "Content-Type": "application/json" });
+    response.end(JSON.stringify({ status: "ok" }));
+    return;
+  }
+
+  response.writeHead(404, { "Content-Type": "application/json" });
+  response.end(JSON.stringify({ error: "Rota não encontrada" }));
+});
+
+server.listen(PORT, () => {
+  console.log(`FocoAI disponível em http://localhost:${PORT}`);
+});</pre>Pressione <code>Ctrl+S</code>. <code>require("node:http")</code> usa o módulo HTTP incluído no Node; não há dependência para instalar.</li>
+<li><strong>Execute e teste.</strong> No terminal, execute:<pre>npm run dev</pre><strong>Resultado esperado:</strong> <code>FocoAI disponível em http://localhost:3000</code>. Mantenha esse terminal aberto. Abra uma nova aba no navegador e acesse <a href="http://localhost:3000/health">http://localhost:3000/health</a>. Você deve ver:<pre>{"status":"ok"}</pre>Para testar pelo PowerShell, em um <strong>segundo</strong> terminal do VS Code, execute:<pre>Invoke-RestMethod http://localhost:3000/health</pre><strong>Resultado esperado:</strong> <code>status</code> com valor <code>ok</code>.</li>
+<li><strong>Configure o depurador.</strong> No Explorer, clique com o botão direito na pasta raiz → <strong>New Folder</strong> → escreva <code>.vscode</code>. Dentro dela, crie <code>launch.json</code> e cole:<pre>{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Depurar FocoAI",
+      "skipFiles": ["&lt;node_internals&gt;/**"],
+      "program": "${workspaceFolder}/src/server.js",
+      "env": { "PORT": "3000" }
+    }
+  ]
+}</pre>Salve com <code>Ctrl+S</code>. Esse arquivo diz ao VS Code qual programa Node executar ao depurar.</li>
+<li><strong>Pause o programa de propósito.</strong> Clique na margem à esquerda da linha <code>response.writeHead(200, ...)</code>; aparecerá um círculo vermelho. Na barra esquerda, clique em <strong>Run and Debug</strong> (ícone de triângulo com inseto), escolha <strong>Depurar FocoAI</strong> e clique no botão verde ou pressione <code>F5</code>. Depois abra <code>http://localhost:3000/health</code> novamente. O VS Code deve pausar na linha marcada. Veja no painel <strong>Variables</strong> que <code>request.url</code> vale <code>/health</code>. Pressione <code>F5</code> outra vez para continuar a resposta.</li>
+<li><strong>Encerre, revise e registre.</strong> Pare o depurador com <strong>Shift+F5</strong>. No terminal que executa <code>npm run dev</code>, pressione <code>Ctrl+C</code>. Então execute:<pre>git status
+git add package.json src/server.js .vscode/launch.json
+git commit -m "feat: adicionar servidor HTTP inicial"
+git status</pre><strong>Resultado esperado final:</strong> <code>nothing to commit, working tree clean</code>.</li>
+</ol>
+<h2>Se algo der errado</h2><div class="callout warn"><strong><code>EADDRINUSE</code>:</strong> a porta 3000 já está em uso. Pare o terminal anterior com <code>Ctrl+C</code> e execute <code>npm run dev</code> de novo.<br><br><strong><code>Cannot find module</code>:</strong> confirme que o arquivo está exatamente em <code>src/server.js</code>, salve-o e rode <code>npm run dev</code> novamente.<br><br><strong>O navegador não abre:</strong> confirme que o terminal ainda mostra o servidor em execução e que a URL é <code>http</code>, não <code>https</code>.</div>
+<h2>Checagem de recuperação</h2><details><summary>Por que há dois scripts, <code>dev</code> e <code>start</code>?</summary><p><code>dev</code> usa <code>--watch</code> para reiniciar durante o desenvolvimento. <code>start</code> executa uma vez, sem observar alterações.</p></details><details><summary>Por que a resposta de rota inexistente usa 404?</summary><p>O código HTTP 404 indica que o servidor recebeu a requisição, mas não encontrou a rota solicitada.</p></details><details><summary>O breakpoint muda o código publicado?</summary><p>Não. Ele é uma configuração do editor para pausar a execução local e não altera <code>server.js</code>.</p></details>
+<h2>Referências</h2><p>Fonte principal: <a href="https://nodejs.org/api/http.html">módulo HTTP oficial do Node.js</a>. Consulte também a documentação do <a href="https://nodejs.org/api/cli.html#--watch">modo <code>--watch</code></a> e os <a href="https://code.visualstudio.com/docs/debugtest/debugging">recursos de depuração do VS Code</a>. Veja o plano completo no <a href="../reference/0001-mapa-do-curso.html">Mapa do curso</a>.</p>
+<div class="callout good"><strong>Ao concluir:</strong> envie a saída de <code>git status</code>, a mensagem exibida por <code>npm run dev</code> e confirme se o breakpoint parou na rota <code>/health</code>.</div><p>Pergunte ao professor quando qualquer tela, comando ou resultado não corresponder ao esperado.</p>
+</body></html>
