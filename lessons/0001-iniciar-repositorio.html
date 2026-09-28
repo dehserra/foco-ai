@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aula 1 — Iniciar o repositório</title><link rel="stylesheet" href="../assets/course.css"></head><body>
+<p class="kicker">FocoAI · Aula 1 de 12 · 20–30 minutos</p><h1>Transforme esta pasta em um repositório publicável</h1><p class="lede">Ao terminar, o projeto terá um histórico Git local, um repositório remoto no GitHub e um primeiro commit. Esta é a base para branches, pull requests, rebase e worktrees nas próximas aulas.</p>
+<div class="callout good"><strong>Vitória desta aula:</strong> <code>git status</code> mostrará <em>working tree clean</em>, e a página do GitHub exibirá o commit inicial.</div>
+<h2>Antes de começar</h2><p>Você está na pasta <code>minicurso-dev</code>. Ela contém os materiais do curso e será a raiz do FocoAI. As ferramentas já foram verificadas: Git 2.53, Node 26.7, npm 11.19 e VS Code 1.139.</p>
+<div class="card"><strong>Modelo mental mínimo</strong><table><tbody><tr><th>Termo</th><th>O que é</th></tr><tr><td>Repositório</td><td>A pasta e o histórico que o Git controla.</td></tr><tr><td>Commit</td><td>Uma fotografia nomeada de mudanças preparadas.</td></tr><tr><td>Remote <code>origin</code></td><td>O endereço do mesmo repositório no GitHub.</td></tr><tr><td>Branch</td><td>Uma linha de trabalho que aponta para commits. Hoje usaremos <code>main</code>.</td></tr></tbody></table></div>
+<h2>Faça agora</h2><ol class="steps">
+<li><strong>Abra a pasta correta e o terminal integrado do VS Code.</strong> Primeiro, veja o nome da pasta na barra superior do VS Code: ele deve incluir <code>minicurso-dev</code>. Se estiver em outra pasta, clique em <strong>Arquivo → Abrir Pasta...</strong>, navegue até <code>D:\OneDrive\André Serra\01 Projetos\minicurso-dev</code> e clique em <strong>Selecionar Pasta</strong>. Depois clique em <strong>Terminal → Novo Terminal</strong>. Alternativa: pressione <code>Ctrl+`</code>; a tecla de crase fica normalmente à esquerda do número 1. O painel Terminal abrirá na parte inferior. Digite cada comando abaixo e pressione <code>Enter</code> após cada um:<pre>pwd
+git status</pre><strong>Resultado esperado de <code>pwd</code>:</strong> um caminho terminado em <code>/01 Projetos/minicurso-dev</code> ou <code>\01 Projetos\minicurso-dev</code>. <strong>Resultado esperado de <code>git status</code>:</strong> uma mensagem dizendo que esta ainda não é um repositório Git. Se <code>pwd</code> terminar em outra pasta, clique em <strong>Terminal → Kill Terminal</strong>, abra a pasta indicada acima e crie um novo terminal.</li>
+<li><strong>Confira a identidade que aparecerá nos commits.</strong><pre>git config --global user.name
+git config --global user.email</pre>Se algum comando não imprimir valor, configure-o antes de continuar:<pre>git config --global user.name "Seu Nome"
+git config --global user.email "seu-email@example.com"</pre>Use o e-mail que você quer associar à sua conta do GitHub.</li>
+<li><strong>Crie o repositório local e fixe o nome da branch principal.</strong><pre>git init -b main
+git status</pre>Agora o VS Code deve mostrar o ícone de Source Control com mudanças não rastreadas.</li>
+<li><strong>Crie os dois arquivos que não devem faltar.</strong> No Explorer do VS Code, crie <code>README.md</code> com este conteúdo:<pre># FocoAI
+
+Um organizador de tarefas com SQLite e IA.
+
+## Como executar
+Em construção durante o minicurso.</pre>Crie também <code>.gitignore</code> com:<pre>node_modules/
+.env
+*.db
+*.sqlite
+.DS_Store</pre><strong>Por quê:</strong> dependências, chaves e bancos locais não pertencem ao histórico compartilhado.</li>
+<li><strong>Faça o primeiro commit.</strong> Revise antes de gravar:<pre>git status
+git add README.md .gitignore MISSION.md RESOURCES.md NOTES.md IDEA.md assets lessons reference
+git commit -m "chore: iniciar curso e repositório do FocoAI"
+git log --oneline -1</pre>O último comando deve mostrar um hash curto e a mensagem do commit.</li>
+<li><strong>Crie o repositório remoto no GitHub.</strong> No navegador, entre em <a href="https://github.com/new">github.com/new</a>. Defina o nome <code>foco-ai</code>, escolha a visibilidade que preferir e <strong>não</strong> marque README, <code>.gitignore</code> nem licença. Criar esses arquivos no remoto agora produziria dois históricos iniciais desnecessários.</li>
+<li><strong>Conecte e envie o histórico.</strong> Copie a URL HTTPS exibida pelo GitHub e substitua apenas o trecho entre sinais de menor/maior:<pre>git remote add origin &lt;URL-HTTPS-DO-SEU-REPOSITORIO&gt;
+git remote -v
+git push -u origin main</pre>Na primeira vez, o GitHub pode pedir autenticação no navegador. Conclua-a; não cole tokens no terminal ou em arquivos do projeto.</li>
+<li><strong>Verifique no navegador e no VS Code.</strong> Atualize a página do repositório no GitHub. Depois rode:<pre>git status
+git branch -vv</pre>O estado deve estar limpo e <code>main</code> deve rastrear <code>origin/main</code>.</li>
+</ol>
+<h2>Checagem de recuperação</h2><details><summary>Por que o README não foi criado pelo GitHub nesta aula?</summary><p>Porque já existe um histórico local. Criar um commit inicial também no remoto criaria duas pontas que teríamos de reconciliar. O remoto vazio recebe a história local diretamente.</p></details><details><summary>O que <code>-u</code> faz em <code>git push -u origin main</code>?</summary><p>Define <code>origin/main</code> como upstream de <code>main</code>. Depois disso, <code>git push</code> e <code>git pull</code> sabem qual branch remota usar.</p></details><details><summary>Por que <code>.env</code> está no <code>.gitignore</code>?</summary><p>Ele será usado mais tarde para a chave da API. Uma chave publicada no GitHub deve ser considerada comprometida e revogada.</p></details>
+<h2>Se algo der errado</h2><div class="callout warn"><strong><code>remote origin already exists</code>:</strong> rode <code>git remote set-url origin &lt;URL-HTTPS&gt;</code>, confira com <code>git remote -v</code> e repita o push.<br><br><strong><code>src refspec main does not match any</code>:</strong> ainda não existe commit. Execute a etapa 5 e tente novamente.<br><br><strong>Autenticação falhou:</strong> execute <code>git push -u origin main</code> de novo e conclua a janela de login do GitHub. Não use sua senha do GitHub como token.</div>
+<h2>Referências</h2><p>Leia quando precisar: <a href="https://git-scm.com/docs/git-init">git init</a>, <a href="https://git-scm.com/docs/git-remote">git remote</a> e <a href="https://code.visualstudio.com/docs/sourcecontrol/overview">controle de versão no VS Code</a>. Veja a sequência completa em <a href="../reference/0001-mapa-do-curso.html">Mapa do curso</a>.</p>
+<div class="callout good"><strong>Ao concluir:</strong> envie aqui a saída de <code>git status</code> e <code>git branch -vv</code>. Eu validarei a fundação e liberarei a Aula 2: servidor HTTP e depurador do VS Code.</div>
+<p>Pergunte ao professor quando qualquer termo, comando ou resultado não estiver claro.</p>
+</body></html>
