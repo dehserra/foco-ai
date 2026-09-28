@@ -13,7 +13,7 @@ André quer aprender o ciclo completo de desenvolvimento entregando um sistema p
 ## Constraints
 - Aprender construindo um projeto pequeno, em passos curtos e com uma evidência verificável por etapa.
 - Usar Node.js, JavaScript, SQLite integrado ao Node e a API da OpenAI em uma etapa posterior e opcional.
-- Ambiente atual: Windows 11, Git 2.53, Node 26.7, npm 11.19 e VS Code 1.139.
+- Ambiente atual confirmado no terminal do usuário: Windows 11, Git 2.53, Node 24.21.0, npm 11.19 e VS Code 1.139.
 
 ## Out of scope
 - Produção em larga escala, autenticação de usuários, infraestrutura em nuvem e arquitetura de microserviços.

@@ -8,3 +8,4 @@
 - O usuário quer aprender o ciclo inteiro de desenvolvimento: Git/GitHub, VS Code, banco de dados e IA.
 - Não há evidência de conhecimento prévio de Git, SQL ou JavaScript; começar pelo essencial e ajustar a dificuldade a partir das respostas e entregas.
 - Projeto didático escolhido: FocoAI, organizador de tarefas com decomposição assistida por IA.
+- Ambiente confirmado pelo usuário: Node.js 24.21.0; usar essa versão nas verificações e exemplos.
