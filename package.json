@@ -4,7 +4,7 @@
   "description": "Um organizador de tarefas com SQLite e IA",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test",
     "dev": "node --watch src/server.js",
     "start": "node src/server.js"
   },
