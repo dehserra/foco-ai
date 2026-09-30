@@ -1,19 +1,16 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mapa da Aula 4 — API de tarefas</title><link rel="stylesheet" href="../assets/course.css"></head><body>
-<p class="kicker">FocoAI · Mapa conceitual da sessão</p><h1>Do banco local para uma API de tarefas</h1><p class="lede">A Aula 3 provou que o SQLite guarda uma tarefa. Agora o servidor HTTP passará a receber pedidos, validar dados e devolver respostas JSON para que uma interface possa usar as tarefas depois.</p>
-<h2>Objetivo</h2><p>Implementar as rotas <code>GET /tasks</code>, <code>POST /tasks</code> e <code>PATCH /tasks/:id</code>. Ao final, o terminal poderá criar, listar e alterar o status de uma tarefa por HTTP.</p>
-<h2>Conceitos novos</h2><table><thead><tr><th>Conceito</th><th>Significado</th></tr></thead><tbody><tr><td>API HTTP</td><td>Contrato pelo qual outro programa pede ou altera dados.</td></tr><tr><td>Rota</td><td>Combinação de método e caminho, como <code>POST /tasks</code>.</td></tr><tr><td>JSON</td><td>Formato de texto estruturado usado no corpo das requisições e respostas.</td></tr><tr><td>Validação</td><td>Checagem dos dados antes de escrever no banco.</td></tr><tr><td>Status HTTP</td><td>Código que comunica o resultado: <code>200</code>, <code>201</code>, <code>400</code> ou <code>404</code>.</td></tr><tr><td>Teste automatizado</td><td>Programa que executa uma verificação repetível sem inspeção manual.</td></tr></tbody></table>
-<h2>Mapa das peças</h2><pre>cliente (curl hoje; navegador na Aula 5)
-        ↓ HTTP + JSON
-src/server.js
-        ↓ chama funções JavaScript
-src/database.js
-        ↓ SQL
- data/foco-ai.db</pre>
-<p>Não enviaremos SQL pela internet. O servidor aceita apenas dados simples, valida-os e chama funções específicas do módulo do banco.</p>
-<h2>Contrato inicial</h2><table><thead><tr><th>Pedido</th><th>Resposta de sucesso</th><th>Falhas tratadas</th></tr></thead><tbody><tr><td><code>GET /tasks</code></td><td><code>200</code> e lista de tarefas</td><td>—</td></tr><tr><td><code>POST /tasks</code> com <code>{"title":"Estudar API"}</code></td><td><code>201</code> e a tarefa criada</td><td><code>400</code> sem título; <code>409</code> se repetida</td></tr><tr><td><code>PATCH /tasks/1</code> com <code>{"status":"done"}</code></td><td><code>200</code> e tarefa atualizada</td><td><code>400</code> para dados inválidos; <code>404</code> se inexistente</td></tr></tbody></table>
-<h2>Arquivos e ferramentas</h2><table><thead><tr><th>Item</th><th>Papel</th></tr></thead><tbody><tr><td><code>src/database.js</code></td><td>Deixa de ser um script demonstrativo e passa a exportar funções de dados.</td></tr><tr><td><code>src/server.js</code></td><td>Traduz cada pedido HTTP para uma operação segura no banco.</td></tr><tr><td><code>test/server.test.js</code></td><td>Verifica as rotas com o executor nativo <code>node --test</code>.</td></tr><tr><td><code>curl</code></td><td>Cliente de terminal para observar a API passo a passo.</td></tr></tbody></table>
-<h2>Resultado observável</h2><p>Com <code>npm run dev</code> ativo, <code>curl http://localhost:3000/tasks</code> retornará JSON. Ao enviar um <code>POST</code>, uma tarefa nova será gravada e aparecerá no próximo <code>GET</code>.</p>
-<h2>Fora de escopo</h2><p>Interface visual, autenticação, usuários, exclusão de tarefas e IA. A interface consumirá essa API na Aula 5.</p>
-<p><a href="../lessons/0004-api-de-tarefas.html">Abrir Aula 4</a> · <a href="0003-mapa-aula-3-sqlite.html">Revisar Aula 3</a></p>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mapa da Aula 4 — API e testes</title><link rel="stylesheet" href="../assets/course.css"></head><body>
+<p class="kicker">FocoAI · Mapa conceitual da Aula 4</p><h1>Da validação manual ao teste repetível</h1><p class="lede">API já funcionou no PowerShell. Agora ela precisa provar mesmo contrato automaticamente, isolada do banco local.</p>
+<h2>Resultado já confirmado</h2><table><thead><tr><th>Pedido</th><th>Status</th></tr></thead><tbody><tr><td>GET /tasks</td><td>200</td></tr><tr><td>POST /tasks</td><td>201</td></tr><tr><td>PATCH /tasks/:id</td><td>200</td></tr><tr><td>Dados inválidos</td><td>400</td></tr><tr><td>Id inexistente</td><td>404</td></tr><tr><td>Título duplicado</td><td>409</td></tr></tbody></table>
+<h2>Novos conceitos</h2><table><thead><tr><th>Conceito</th><th>Função</th></tr></thead><tbody><tr><td>Injeção de dependência</td><td>Teste entrega store temporário ao servidor.</td></tr><tr><td>Fábrica</td><td><code>createServer(store)</code> cria servidor, sem iniciar porta.</td></tr><tr><td>Banco temporário</td><td>SQLite criado e removido no fim do teste.</td></tr><tr><td>Assertion</td><td>Verificação de status e JSON.</td></tr><tr><td>Porta aleatória</td><td><code>listen(0)</code> evita conflito com 3000.</td></tr></tbody></table>
+<h2>Fluxo</h2><pre>npm test
+  → test/server.test.js
+  → createTaskStore(caminho temporário)
+  → createServer(store)
+  → server.listen(0)
+  → fetch HTTP + assertions
+  → fecha servidor + apaga temporários</pre>
+<h2>Arquivos</h2><table><thead><tr><th>Arquivo</th><th>Papel</th></tr></thead><tbody><tr><td>src/database.js</td><td>Cria store no caminho pedido.</td></tr><tr><td>src/server.js</td><td>Exporta <code>createServer</code>; abre 3000 só ao executar diretamente.</td></tr><tr><td>test/server.test.js</td><td>Testa contrato sem banco real.</td></tr><tr><td>package.json</td><td><code>npm test</code> executa <code>node --test</code>.</td></tr></tbody></table>
+<h2>PowerShell</h2><p><code>curl</code> é alias de <code>Invoke-WebRequest</code>. Em validação manual, use <code>Invoke-WebRequest -UseBasicParsing</code>; 4xx aparecem como exceção, mas confirmam status esperado.</p>
+<h2>Resultado observável</h2><p>Rodar <code>npm test</code> duas vezes termina verde e não altera <code>data/foco-ai.db</code>.</p><p><a href="../lessons/0004-api-de-tarefas.html">Abrir Aula 4</a> · <a href="0005-teste-de-api-node.html">Referência rápida</a></p>
 </body></html>

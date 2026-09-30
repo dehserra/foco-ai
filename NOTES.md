@@ -12,3 +12,6 @@
 - Não há evidência de conhecimento prévio de Git, SQL ou JavaScript; começar pelo essencial e ajustar a dificuldade a partir das respostas e entregas.
 - Projeto didático escolhido: FocoAI, organizador de tarefas com decomposição assistida por IA.
 - Ambiente confirmado pelo usuário: Node.js 24.21.0; usar essa versão nas verificações e exemplos.
+- Na retomada da Aula 4, priorizar o entendimento do fluxo visual Git + VS Code antes de aprofundar JavaScript; o usuário relatou não entender ainda o código que copiou.
+- Estado da retomada da Aula 4: o aluno adaptou `src/server.js` para usar `createTaskStore` e validou a API manualmente no próprio PowerShell. Confirmados: `GET /tasks` (200), `POST /tasks` (201), `PATCH /tasks/3` (200), título ausente (400), id inexistente (404) e título duplicado (409).
+- Sequência imediata: o aluno editou no próprio VS Code e confirmou `npm test` verde: 1 teste, 1 aprovação, 0 falhas. A próxima etapa é revisar mudanças no Source Control, entender o diff e preparar o commit da Aula 4; o agente explica, pede evidências e confere saídas, mas não altera código sem pedido explícito.
